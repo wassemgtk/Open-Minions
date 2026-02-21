@@ -2,7 +2,7 @@
 
 **One-shot, end-to-end coding agents.** Unattended agents that turn a task into a pull request -- no human interaction in between.
 
-Inspired by [Stripe's Minions](https://stripe.com/blog/minions) -- homegrown coding agents that merge over a thousand PRs weekly at Stripe with no human-written code.
+Inspired by [Stripe's Minions](https://stripe.dev/blog/minions-stripes-one-shot-end-to-end-coding-agents) -- homegrown coding agents that merge over a thousand PRs weekly at Stripe with no human-written code.
 
 ## What Minions Do
 
