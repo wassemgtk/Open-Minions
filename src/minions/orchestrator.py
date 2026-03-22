@@ -188,12 +188,12 @@ class Orchestrator:
                 logger.warning("Post-commit lint found issues")
                 state.ci_round = 1
 
-            _step("Pushing branch...")
-            self.git.push(state.branch_name)
-            logger.info("Pushed branch %s", state.branch_name)
-
-            # 5. Create PR
+            # 5. Push and create PR (only when --create-pr is set)
             if create_pr_after:
+                _step("Pushing branch...")
+                self.git.push(state.branch_name)
+                logger.info("Pushed branch %s", state.branch_name)
+
                 _phase("pull request")
                 pr_url = await self._create_pr(
                     state, task, github_token
