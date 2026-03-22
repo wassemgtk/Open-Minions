@@ -32,10 +32,18 @@ app = typer.Typer(
 )
 
 
+_GLOBAL_MINIONS_DIR = Path.home() / ".minions"
+
+
 @app.callback()
 def _load_env() -> None:
-    """Load .env files before any command runs."""
-    load_dotenv()
+    """Load .env files before any command runs.
+
+    Load order: global ~/.minions/.env first, then project-level .env.
+    Later values override earlier ones, so project .env wins.
+    """
+    load_dotenv(_GLOBAL_MINIONS_DIR / ".env")
+    load_dotenv(override=True)
 
 
 _PROVIDER_ENV_KEYS = {
@@ -59,8 +67,8 @@ def _check_llm_keys(config: MinionConfig) -> None:
     print_error(
         "No LLM API key found",
         f"Set at least one of: {', '.join(expected)}\n"
-        "  You can export it in your shell or add it to a .env file.\n"
-        "  Copy .env.example to .env to get started.",
+        "  Run [bold]minion setup[/] for interactive configuration,\n"
+        "  or export the key in your shell / add it to a .env file.",
     )
     raise typer.Exit(1)
 
@@ -217,6 +225,71 @@ git:
     config_file.write_text(example)
     print_success(f"Created {config_file}")
     console.print("  Edit to add LLM keys, Slack tokens, GitHub config, etc.")
+
+
+def _mask_key(key: str) -> str:
+    """Show only last 4 characters of an API key."""
+    if len(key) <= 4:
+        return "****"
+    return "*" * (len(key) - 4) + key[-4:]
+
+
+@app.command()
+def setup() -> None:
+    """Interactive first-time setup. Saves API keys to ~/.minions/.env."""
+    print_banner()
+    console.print("  Configure your API keys. They'll be saved to [minion.file]~/.minions/.env[/]\n")
+
+    anthropic_key = typer.prompt(
+        "  Anthropic API key (or Enter to skip)",
+        default="",
+        show_default=False,
+    )
+    openai_key = typer.prompt(
+        "  OpenAI API key (or Enter to skip)",
+        default="",
+        show_default=False,
+    )
+
+    if not anthropic_key and not openai_key:
+        print_error(
+            "No API key provided",
+            "At least one LLM key (Anthropic or OpenAI) is required.",
+        )
+        raise typer.Exit(1)
+
+    github_token = typer.prompt(
+        "  GitHub token (optional, for PRs)",
+        default="",
+        show_default=False,
+    )
+
+    # Write to ~/.minions/.env
+    _GLOBAL_MINIONS_DIR.mkdir(parents=True, exist_ok=True)
+    env_path = _GLOBAL_MINIONS_DIR / ".env"
+
+    lines = []
+    if anthropic_key:
+        lines.append(f"ANTHROPIC_API_KEY={anthropic_key}")
+    if openai_key:
+        lines.append(f"OPENAI_API_KEY={openai_key}")
+    if github_token:
+        lines.append(f"GITHUB_TOKEN={github_token}")
+
+    env_path.write_text("\n".join(lines) + "\n")
+    env_path.chmod(0o600)
+
+    # Summary
+    print_success(f"Saved to {env_path}")
+    console.print()
+    if anthropic_key:
+        console.print(f"  ANTHROPIC_API_KEY  {_mask_key(anthropic_key)}")
+    if openai_key:
+        console.print(f"  OPENAI_API_KEY     {_mask_key(openai_key)}")
+    if github_token:
+        console.print(f"  GITHUB_TOKEN       {_mask_key(github_token)}")
+    console.print()
+    console.print("  Run [bold]minion run \"your task\"[/] to get started.\n")
 
 
 # ── Slack Command ──────────────────────────────────────────

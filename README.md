@@ -41,19 +41,24 @@ Task -> Context Hydration -> Agent Loop <-> Lint/Test -> Branch -> PR
 ### Install
 
 ```bash
-cd open-minions
-pip install -e .
+pip install open-minions
 
 # With Slack support:
-pip install -e '.[slack]'
+pip install 'open-minions[slack]'
 ```
+
+### Setup
+
+```bash
+# Interactive — prompts for API keys, saves to ~/.minions/.env
+minion setup
+```
+
+Or set keys manually via environment variables or a `.env` file (see `.env.example`).
 
 ### Run a Minion
 
 ```bash
-# Set your API key
-export ANTHROPIC_API_KEY=sk-ant-...
-
 # Run a task in current repo
 minion run "Add a retry decorator to the fetch_user function in api/client.py"
 
