@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import subprocess
 from pathlib import Path
 
 import yaml
@@ -86,7 +87,21 @@ class GitHubConfig(BaseModel):
 
     @property
     def token_resolved(self) -> str:
-        return self.token or os.environ.get("GITHUB_TOKEN", "")
+        return self.token or os.environ.get("GITHUB_TOKEN", "") or _gh_cli_token()
+
+
+def _gh_cli_token() -> str:
+    """Auto-detect GitHub token from gh CLI if available."""
+    try:
+        r = subprocess.run(
+            ["gh", "auth", "token"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        return r.stdout.strip() if r.returncode == 0 else ""
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return ""
 
 
 class MinionConfig(BaseModel):

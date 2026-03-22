@@ -258,11 +258,19 @@ def setup() -> None:
         )
         raise typer.Exit(1)
 
-    github_token = typer.prompt(
-        "  GitHub token (optional, for PRs)",
-        default="",
-        show_default=False,
-    )
+    # Auto-detect GitHub token from gh CLI
+    from minions.config import _gh_cli_token
+
+    gh_detected = _gh_cli_token()
+    github_token = ""
+    if gh_detected:
+        console.print(f"  GitHub token       [minion.success]detected from gh CLI[/]")
+    else:
+        github_token = typer.prompt(
+            "  GitHub token (optional, for PRs)",
+            default="",
+            show_default=False,
+        )
 
     # Write to ~/.minions/.env
     _GLOBAL_MINIONS_DIR.mkdir(parents=True, exist_ok=True)
@@ -286,7 +294,9 @@ def setup() -> None:
         console.print(f"  ANTHROPIC_API_KEY  {_mask_key(anthropic_key)}")
     if openai_key:
         console.print(f"  OPENAI_API_KEY     {_mask_key(openai_key)}")
-    if github_token:
+    if gh_detected:
+        console.print(f"  GITHUB_TOKEN       auto-detected from gh CLI")
+    elif github_token:
         console.print(f"  GITHUB_TOKEN       {_mask_key(github_token)}")
     console.print()
     console.print("  Run [bold]minion run \"your task\"[/] to get started.\n")

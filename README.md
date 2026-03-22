@@ -84,18 +84,17 @@ Create runs, view live action logs, and manage minion output from the browser.
 ### Slack Bot
 
 ```bash
-export SLACK_BOT_TOKEN=xoxb-...
-export SLACK_APP_TOKEN=xapp-...
 minion slack --repo ~/my-project
 ```
 
+Requires `SLACK_BOT_TOKEN` and `SLACK_APP_TOKEN` (via `minion setup`, `.env`, or environment).
 Engineers @-mention the bot in a Slack thread. The bot reads the full thread (messages + links), runs the minion, and posts the PR link back.
 
 ### GitHub CLI
 
-```bash
-export GITHUB_TOKEN=ghp_...
+GitHub token is auto-detected from `gh` CLI if you're logged in (`gh auth login`). Otherwise, set it via `minion setup`.
 
+```bash
 # View an issue with comments
 minion github issue 42
 
@@ -235,6 +234,14 @@ open-minions/
 - **MCP servers**: Add tools in `config.yaml` under `mcp.servers`
 - **Agent rules**: Drop `.mdc` / `AGENTS.md` into configured paths; rules are conditionally applied by subdirectory
 - **GitHub webhooks**: Point your repo's webhook to `/webhooks/github/events`; trigger via issue labels or `/minion` comments
+
+## Troubleshooting
+
+**"No LLM API key found"** — Run `minion setup` or set `ANTHROPIC_API_KEY`/`OPENAI_API_KEY` in your environment or `.env` file.
+
+**GitHub token not detected** — Install the [GitHub CLI](https://cli.github.com/) and run `gh auth login`. Or pass the token via `minion setup`, `GITHUB_TOKEN` env var, or `.env` file.
+
+**Slack tokens** — Slack requires `SLACK_BOT_TOKEN` and `SLACK_APP_TOKEN`. Set them via `minion setup`, `.env`, or environment variables. See [Slack Bolt docs](https://slack.dev/bolt-python/tutorial/getting-started) for creating a Slack app.
 
 ## License
 
