@@ -355,7 +355,14 @@ def github(
     setup_logging(verbose)
 
     if not token:
-        print_error("GitHub token required", "Set GITHUB_TOKEN or pass --token.")
+        from minions.config import _gh_cli_token
+
+        token = _gh_cli_token()
+    if not token:
+        print_error(
+            "GitHub token required",
+            "Run [bold]gh auth login[/], or set GITHUB_TOKEN via minion setup / .env.",
+        )
         raise typer.Exit(1)
 
     root = _find_repo_root(repo.resolve())
