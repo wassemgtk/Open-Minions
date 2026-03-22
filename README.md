@@ -115,6 +115,18 @@ The web server mounts a webhook handler at `/webhooks/github/events`. Set up a G
 
 ## Configuration
 
+### API Keys
+
+Run `minion setup` to interactively configure API keys. Keys are saved to `~/.minions/.env` (global, works across all repos). You can also:
+
+- Set environment variables directly: `export ANTHROPIC_API_KEY=...`
+- Use a project-level `.env` file (auto-loaded, overrides global keys)
+- See `.env.example` for all supported variables
+
+Key resolution order: project `.env` > global `~/.minions/.env` > shell environment.
+
+### Project Config
+
 Create `.minions/config.yaml` via `minion init`, or set environment variables:
 
 ```yaml
@@ -202,7 +214,7 @@ open-minions/
 │   ├── config.py              # Pydantic config models
 │   ├── display.py             # Rich display (Live, Tree, Table, logging)
 │   ├── rules.py               # Agent rules loading (conditional by subdir)
-│   ├── cli.py                 # CLI entry point (run, serve, slack, github, init)
+│   ├── cli.py                 # CLI entry point (run, setup, serve, slack, github, init)
 │   ├── web.py                 # FastAPI web UI + GitHub webhook handler
 │   ├── tools/
 │   │   ├── git_tools.py       # Git operations (branch, commit, push)
@@ -212,6 +224,7 @@ open-minions/
 │       ├── slack_bot.py       # Slack bot (thread parsing, Socket Mode)
 │       └── github_client.py   # GitHub API client + webhook handler
 ├── .minions/config.yaml       # Default configuration
+├── .env.example               # Environment variable template
 ├── AGENTS.md                  # Agent rules for this repo
 ├── pyproject.toml
 └── tests/

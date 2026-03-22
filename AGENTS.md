@@ -24,3 +24,5 @@ These rules are consumed by minions (and other coding agents like Cursor/Claude)
 - `src/minions/display.py` - Rich display layer
 - `src/minions/web.py` - FastAPI web UI and GitHub webhook handler
 - Config: `.minions/config.yaml`
+- API keys: `~/.minions/.env` (global) or project-level `.env` (via `python-dotenv`)
+- Never commit `.env` files or API keys to the repository
