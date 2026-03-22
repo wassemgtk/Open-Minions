@@ -32,40 +32,21 @@ Task -> Context Hydration -> Agent Loop <-> Lint/Test -> Branch -> PR
 
 ## Quick Start
 
-### Prerequisites
-
-- Python 3.11+
-- Git
-- `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` (or both for fallback)
-
-### Install
-
 ```bash
-cd open-minions
-pip install -e .
-
-# With Slack support:
-pip install -e '.[slack]'
-```
-
-### Run a Minion
-
-```bash
-# Set your API key
-export ANTHROPIC_API_KEY=sk-ant-...
-
-# Run a task in current repo
+pip install open-minions
+minion setup
 minion run "Add a retry decorator to the fetch_user function in api/client.py"
-
-# With explicit repo, links, and auto-PR creation
-minion run "Fix the type error in utils/validators.py" \
-  --repo ~/my-project \
-  --links "https://docs.example.com/validators" \
-  --create-pr
-
-# Initialize config in a repo
-minion init --repo ~/my-project
 ```
+
+That's it. `minion setup` prompts for your API key and saves it globally. GitHub token is auto-detected from `gh` CLI if you're logged in.
+
+## Usage
+
+```bash
+minion run "Fix the type error in utils/validators.py"
+```
+
+Need more control? See [CLI Options](#cli-options) below.
 
 ### Web UI
 
@@ -74,43 +55,64 @@ minion serve
 # -> http://localhost:8080
 ```
 
-Create runs, view live action logs, and manage minion output from the browser.
-
 ### Slack Bot
 
 ```bash
-export SLACK_BOT_TOKEN=xoxb-...
-export SLACK_APP_TOKEN=xapp-...
 minion slack --repo ~/my-project
 ```
 
-Engineers @-mention the bot in a Slack thread. The bot reads the full thread (messages + links), runs the minion, and posts the PR link back.
+Requires `SLACK_BOT_TOKEN` and `SLACK_APP_TOKEN` (via `.env` or environment). Engineers @-mention the bot in a Slack thread — it reads the full thread and posts the PR link back.
 
 ### GitHub CLI
 
+GitHub token is auto-detected from `gh` CLI. Otherwise, set it via `minion setup`.
+
 ```bash
-export GITHUB_TOKEN=ghp_...
-
-# View an issue with comments
-minion github issue 42
-
-# Check PR status
-minion github pr-status 100
-
-# View CI check results
-minion github checks 100
+minion github issue 42          # View an issue
+minion github pr-status 100     # Check PR status
+minion github checks 100        # View CI results
 ```
 
 ### GitHub Webhooks
 
-The web server mounts a webhook handler at `/webhooks/github/events`. Set up a GitHub webhook pointing to your server. Minion runs are triggered by:
+Point your repo's webhook to `/webhooks/github/events`. Triggers:
+- Label an issue with `minion`
+- Comment `/minion <task>` on an issue
 
-- Labeling an issue with `minion`
-- Commenting `/minion <task>` on an issue
+## CLI Options
+
+```bash
+# Target a different repo
+minion run "Add input validation" --repo ~/my-project
+
+# Create a PR when done
+minion run "Fix the bug" --repo ~/my-project --create-pr
+
+# Provide additional context via links
+minion run "Update the auth flow" --links "https://docs.example.com/auth"
+```
 
 ## Configuration
 
-Create `.minions/config.yaml` via `minion init`, or set environment variables:
+### API Keys
+
+Run `minion setup` to interactively configure API keys. Keys are saved to `~/.minions/.env` (global, works across all repos). You can also:
+
+- Set environment variables directly: `export ANTHROPIC_API_KEY=...`
+- Use a project-level `.env` file (auto-loaded, overrides global keys)
+- See `.env.example` for all supported variables
+
+Key resolution order: project `.env` > global `~/.minions/.env` > shell environment.
+
+### Project Config (optional)
+
+Minions work with sensible defaults. To customize per-repo settings, run `minion init`:
+
+```bash
+minion init --repo ~/my-project
+```
+
+This creates `.minions/config.yaml`:
 
 ```yaml
 # .minions/config.yaml
@@ -197,7 +199,7 @@ open-minions/
 │   ├── config.py              # Pydantic config models
 │   ├── display.py             # Rich display (Live, Tree, Table, logging)
 │   ├── rules.py               # Agent rules loading (conditional by subdir)
-│   ├── cli.py                 # CLI entry point (run, serve, slack, github, init)
+│   ├── cli.py                 # CLI entry point (run, setup, serve, slack, github, init)
 │   ├── web.py                 # FastAPI web UI + GitHub webhook handler
 │   ├── tools/
 │   │   ├── git_tools.py       # Git operations (branch, commit, push)
@@ -207,6 +209,7 @@ open-minions/
 │       ├── slack_bot.py       # Slack bot (thread parsing, Socket Mode)
 │       └── github_client.py   # GitHub API client + webhook handler
 ├── .minions/config.yaml       # Default configuration
+├── .env.example               # Environment variable template
 ├── AGENTS.md                  # Agent rules for this repo
 ├── pyproject.toml
 └── tests/
@@ -217,6 +220,14 @@ open-minions/
 - **MCP servers**: Add tools in `config.yaml` under `mcp.servers`
 - **Agent rules**: Drop `.mdc` / `AGENTS.md` into configured paths; rules are conditionally applied by subdirectory
 - **GitHub webhooks**: Point your repo's webhook to `/webhooks/github/events`; trigger via issue labels or `/minion` comments
+
+## Troubleshooting
+
+**"No LLM API key found"** — Run `minion setup` or set `ANTHROPIC_API_KEY`/`OPENAI_API_KEY` in your environment or `.env` file.
+
+**GitHub token not detected** — Install the [GitHub CLI](https://cli.github.com/) and run `gh auth login`. Or pass the token via `minion setup`, `GITHUB_TOKEN` env var, or `.env` file.
+
+**Slack tokens** — Slack requires `SLACK_BOT_TOKEN` and `SLACK_APP_TOKEN`. Set them via `minion setup`, `.env`, or environment variables. See [Slack Bolt docs](https://slack.dev/bolt-python/tutorial/getting-started) for creating a Slack app.
 
 ## License
 
