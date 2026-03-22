@@ -42,18 +42,11 @@ That's it. `minion setup` prompts for your API key and saves it globally. GitHub
 
 ## Usage
 
-### CLI
-
 ```bash
-# Run a task in current repo
 minion run "Fix the type error in utils/validators.py"
-
-# Target a different repo and create a PR
-minion run "Add input validation" --repo ~/my-project --create-pr
-
-# Provide additional context via links
-minion run "Update the auth flow" --links "https://docs.example.com/auth"
 ```
+
+Need more control? See [CLI Options](#cli-options) below.
 
 ### Web UI
 
@@ -85,6 +78,19 @@ minion github checks 100        # View CI results
 Point your repo's webhook to `/webhooks/github/events`. Triggers:
 - Label an issue with `minion`
 - Comment `/minion <task>` on an issue
+
+## CLI Options
+
+```bash
+# Target a different repo
+minion run "Add input validation" --repo ~/my-project
+
+# Create a PR when done
+minion run "Fix the bug" --repo ~/my-project --create-pr
+
+# Provide additional context via links
+minion run "Update the auth flow" --links "https://docs.example.com/auth"
+```
 
 ## Configuration
 
