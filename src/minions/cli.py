@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from pathlib import Path
 
 import typer
+from dotenv import load_dotenv
 
 from minions.config import MinionConfig
 from minions.display import (
@@ -28,6 +30,39 @@ app = typer.Typer(
     no_args_is_help=True,
     rich_markup_mode="rich",
 )
+
+
+@app.callback()
+def _load_env() -> None:
+    """Load .env files before any command runs."""
+    load_dotenv()
+
+
+_PROVIDER_ENV_KEYS = {
+    "anthropic": "ANTHROPIC_API_KEY",
+    "openai": "OPENAI_API_KEY",
+}
+
+
+def _check_llm_keys(config: MinionConfig) -> None:
+    """Fail fast if no LLM provider has an API key configured."""
+    providers = [config.llm.provider]
+    if config.llm.fallback_provider:
+        providers.append(config.llm.fallback_provider)
+
+    for provider in providers:
+        env_key = _PROVIDER_ENV_KEYS.get(provider, "")
+        if env_key and os.environ.get(env_key):
+            return  # At least one provider has a key
+
+    expected = [_PROVIDER_ENV_KEYS[p] for p in providers if p in _PROVIDER_ENV_KEYS]
+    print_error(
+        "No LLM API key found",
+        f"Set at least one of: {', '.join(expected)}\n"
+        "  You can export it in your shell or add it to a .env file.\n"
+        "  Copy .env.example to .env to get started.",
+    )
+    raise typer.Exit(1)
 
 
 def _find_repo_root(start: Path) -> Path | None:
@@ -72,6 +107,10 @@ def run(
         raise typer.Exit(1)
 
     config = MinionConfig.discover(root)
+
+    # Validate LLM keys before starting the run
+    _check_llm_keys(config)
+
     links_list = [u.strip() for u in links.split(",") if u.strip()] if links else []
 
     print_run_header(task, root, links_list or None)
